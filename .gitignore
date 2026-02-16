@@ -1,0 +1,51 @@
+# Dependencies
+node_modules
+
+# Build outputs
+dist
+dist-ssr
+build
+*.tsbuildinfo
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Test & coverage
+coverage
+.nyc_output
+
+# Vite
+*.local
+
+# Cache
+.cache
+.vite
+.eslintcache
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor / IDE
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.vscode/*
+!.vscode/extensions.json
+
+# Ignore scenario JSON files
+data/scenarios/*.json

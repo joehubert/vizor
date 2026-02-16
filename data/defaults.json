@@ -1,0 +1,13 @@
+{
+  "cpiRate": 3,
+  "estimatedTaxRate": 25,
+  "typicalCosts": {
+    "utilities": 6000,
+    "householdExpenses": 12000,
+    "autoInsurance": 2400,
+    "healthInsurance": 8000,
+    "homeownersInsurance": 2000
+  },
+  "retirementGrowthRate": 6,
+  "socialSecurityCOLA": 2.5
+}
