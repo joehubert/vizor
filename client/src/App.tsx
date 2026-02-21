@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import type { ScenarioResponse, ScenarioConfig, Defaults, Model, ModelType, Scenario, CalculationOutput } from './types/models';
 import OverviewLineChart from './components/Charts/OverviewLineChart';
 import StackedBarChart from './components/Charts/StackedBarChart';
+import InvestmentBalanceChart from './components/Charts/InvestmentBalanceChart';
 import DataTable from './components/DataTable/DataTable';
 import ModelSidebar from './components/Dashboard/ModelSidebar';
 import ModelFormPanel from './components/ModelForms/ModelFormPanel';
@@ -387,6 +388,10 @@ function App() {
                 <section className="chart-section">
                   <h2>Income & Expense Breakdown</h2>
                   <StackedBarChart years={detail.calculated.years} />
+                </section>
+                <section className="chart-section">
+                  <h2>Investment Account Balance Projection</h2>
+                  <InvestmentBalanceChart accountBalances={detail.calculated.accountBalances} />
                 </section>
               </div>
             )}

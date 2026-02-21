@@ -48,9 +48,10 @@ function calculateYearBalance(
     }
   }
 
-  const balanceAfterFlows = startingBalance + contributionAmount - distributionAmount;
-  const growth = balanceAfterFlows * (model.growthRate / 100);
-  const endingBalance = balanceAfterFlows + growth;
+  // Formula: ending = (starting + contributions - distributions) * (1 + growthRate)
+  const remainingBalance = startingBalance + contributionAmount - distributionAmount;
+  const growth = remainingBalance * (model.growthRate / 100);
+  const endingBalance = remainingBalance + growth;
   const taxRate = model.distributions?.taxRate ?? 0;
   const distributionIncome = distributionAmount * (1 - taxRate / 100);
 
