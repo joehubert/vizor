@@ -250,6 +250,101 @@ describe('Retirement account with contributions, distributions, and growth', () 
     // Distributions should appear as income
     expect(result.years[0].incomes).toHaveLength(1);
     expect(result.years[0].incomes[0].amount).toBeCloseTo(40000, 2);
+    expect(bal2025.distributionIncome).toBeCloseTo(40000, 2);
+  });
+
+  it('should credit after-tax income when distribution tax rate is set', () => {
+    const retirement: RetirementAccountModel = {
+      id: 'ret-taxed',
+      type: 'retirement_account',
+      enabled: true,
+      description: 'Taxed Distribution Account',
+      currentBalance: 200000,
+      balanceAsOfYear: 2025,
+      growthRate: 0,
+      contributions: null,
+      distributions: {
+        amount: 50000,
+        startYear: 2025,
+        endYear: 2025,
+        increaseType: 'percent',
+        increaseRate: 0,
+        taxRate: 20,
+      },
+    };
+
+    const scenario = makeScenario({
+      config: { startYear: 2025, endYear: 2025, cpiRate: 3.0, startingCashBalance: 0 },
+      models: [retirement],
+    });
+    const result = calculate(scenario);
+
+    const bal2025 = result.accountBalances.find((b) => b.year === 2025)!;
+    expect(bal2025.distributions).toBeCloseTo(50000, 2);
+    expect(bal2025.distributionIncome).toBeCloseTo(40000, 2);
+    expect(bal2025.endingBalance).toBeCloseTo(150000, 2);
+    expect(result.years[0].incomes[0].amount).toBeCloseTo(40000, 2);
+  });
+
+  it('should behave like no tax when distribution tax rate is explicitly zero', () => {
+    const retirement: RetirementAccountModel = {
+      id: 'ret-tax-zero',
+      type: 'retirement_account',
+      enabled: true,
+      description: 'Zero Tax Distribution Account',
+      currentBalance: 500000,
+      balanceAsOfYear: 2025,
+      growthRate: 5.0,
+      contributions: null,
+      distributions: {
+        amount: 40000,
+        startYear: 2025,
+        endYear: 2030,
+        increaseType: 'percent',
+        increaseRate: 0,
+        taxRate: 0,
+      },
+    };
+
+    const scenario = makeScenario({ models: [retirement] });
+    const result = calculate(scenario);
+
+    const bal2025 = result.accountBalances.find((b) => b.year === 2025)!;
+    expect(bal2025.distributions).toBeCloseTo(40000, 2);
+    expect(bal2025.distributionIncome).toBeCloseTo(40000, 2);
+    expect(result.years[0].incomes[0].amount).toBeCloseTo(40000, 2);
+  });
+
+  it('should apply tax rate to the capped distribution amount', () => {
+    const retirement: RetirementAccountModel = {
+      id: 'ret-tax-capped',
+      type: 'retirement_account',
+      enabled: true,
+      description: 'Capped Taxed Distribution Account',
+      currentBalance: 30000,
+      balanceAsOfYear: 2025,
+      growthRate: 0,
+      contributions: null,
+      distributions: {
+        amount: 50000,
+        startYear: 2025,
+        endYear: 2025,
+        increaseType: 'percent',
+        increaseRate: 0,
+        taxRate: 25,
+      },
+    };
+
+    const scenario = makeScenario({
+      config: { startYear: 2025, endYear: 2025, cpiRate: 3.0, startingCashBalance: 0 },
+      models: [retirement],
+    });
+    const result = calculate(scenario);
+
+    const bal2025 = result.accountBalances.find((b) => b.year === 2025)!;
+    expect(bal2025.distributions).toBeCloseTo(30000, 2);
+    expect(bal2025.distributionIncome).toBeCloseTo(22500, 2);
+    expect(result.years[0].incomes[0].amount).toBeCloseTo(22500, 2);
   });
 
   it('should track balance with both contributions and distributions', () => {

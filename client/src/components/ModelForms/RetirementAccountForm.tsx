@@ -27,7 +27,17 @@ function emptyDistributions(endYear: number, cpiRate: number): Schedule {
     endYear,
     increaseType: 'percent',
     increaseRate: cpiRate,
+    taxRate: 0,
   };
+}
+
+function withDistributionDefaults(
+  schedule: Schedule | null,
+  endYear: number,
+  cpiRate: number,
+): Schedule {
+  const base = schedule ?? emptyDistributions(endYear, cpiRate);
+  return { ...base, taxRate: base.taxRate ?? 0 };
 }
 
 export default function RetirementAccountForm({ model, defaults, scenarioEndYear, onSave, onDelete, onCancel }: Props) {
@@ -35,7 +45,9 @@ export default function RetirementAccountForm({ model, defaults, scenarioEndYear
   const [showContrib, setShowContrib] = useState(model.contributions !== null);
   const [showDistrib, setShowDistrib] = useState(model.distributions !== null);
   const [contrib, setContrib] = useState<Schedule>(model.contributions ?? { ...EMPTY_CONTRIBUTIONS });
-  const [distrib, setDistrib] = useState<Schedule>(model.distributions ?? emptyDistributions(scenarioEndYear, defaults.cpiRate));
+  const [distrib, setDistrib] = useState<Schedule>(
+    withDistributionDefaults(model.distributions, scenarioEndYear, defaults.cpiRate),
+  );
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   function validate(): boolean {
@@ -55,6 +67,7 @@ export default function RetirementAccountForm({ model, defaults, scenarioEndYear
       if (!distrib.startYear) errs.distribStartYear = 'Required';
       if (!distrib.endYear) errs.distribEndYear = 'Required';
       if (distrib.endYear < distrib.startYear) errs.distribEndYear = 'Must be after start year';
+      if ((distrib.taxRate ?? 0) < 0 || (distrib.taxRate ?? 0) > 100) errs.distribTaxRate = 'Must be between 0 and 100';
     }
     setErrors(errs);
     return Object.keys(errs).length === 0;
@@ -155,7 +168,7 @@ export default function RetirementAccountForm({ model, defaults, scenarioEndYear
             <button
               type="button"
               className="btn-clear-link"
-              onClick={() => setDistrib(emptyDistributions(scenarioEndYear, defaults.cpiRate))}
+              onClick={() => setDistrib(withDistributionDefaults(null, scenarioEndYear, defaults.cpiRate))}
             >
               Clear
             </button>
@@ -189,6 +202,19 @@ export default function RetirementAccountForm({ model, defaults, scenarioEndYear
               <label>Annual increase</label>
               <input type="number" step="0.1" value={distrib.increaseRate} onChange={(e) => setDistrib({ ...distrib, increaseRate: Number(e.target.value) })} />
               <div className="form-hint">Default CPI: {defaults.cpiRate}%</div>
+            </div>
+            <div className="form-group">
+              <label>Tax rate on withdrawals (%)</label>
+              <input
+                type="number"
+                min={0}
+                max={100}
+                step="0.1"
+                value={distrib.taxRate ?? 0}
+                onChange={(e) => setDistrib({ ...distrib, taxRate: Number(e.target.value) })}
+              />
+              <div className="form-hint">The portion of each withdrawal paid in taxes. After-tax amount is credited to income; gross amount still depletes the account.</div>
+              {errors.distribTaxRate && <div className="form-error">{errors.distribTaxRate}</div>}
             </div>
           </>
         )}

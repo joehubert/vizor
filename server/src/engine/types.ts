@@ -30,6 +30,7 @@ export interface AccountBalanceYear {
   startingBalance: number;
   contributions: number;
   distributions: number;
+  distributionIncome: number;
   growth: number;
   endingBalance: number;
 }

@@ -186,8 +186,11 @@ Show calculated monthly and annual payment (same as mortgage).
 | "Withdrawals end year" | distributions.endYear | Scenario end year | No* |
 | "How do withdrawals grow?" | distributions.increaseType | percent | No* |
 | "Annual increase" | distributions.increaseRate | CPI rate | No* |
+| "Tax rate on withdrawals (%)" | distributions.taxRate | 0 | No |
 
 *Contribution and distribution sections should be collapsible. If a section is left empty, the schedule is null.
+
+Hint for withdrawal tax field: "The portion of each withdrawal paid in taxes. The after-tax amount will be credited to income. Gross withdrawal still depletes the account balance."
 
 #### Social Security
 | Field Label | Maps To | Default | Required |

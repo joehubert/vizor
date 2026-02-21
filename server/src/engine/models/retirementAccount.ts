@@ -51,10 +51,12 @@ function calculateYearBalance(
   const balanceAfterFlows = startingBalance + contributionAmount - distributionAmount;
   const growth = balanceAfterFlows * (model.growthRate / 100);
   const endingBalance = balanceAfterFlows + growth;
+  const taxRate = model.distributions?.taxRate ?? 0;
+  const distributionIncome = distributionAmount * (1 - taxRate / 100);
 
   const incomeItem: LineItem | null =
     distributionAmount > 0
-      ? { modelId: model.id, description: model.description, amount: distributionAmount }
+      ? { modelId: model.id, description: model.description, amount: distributionIncome }
       : null;
 
   const expenseItem: LineItem | null =
@@ -69,6 +71,7 @@ function calculateYearBalance(
     startingBalance,
     contributions: contributionAmount,
     distributions: distributionAmount,
+    distributionIncome,
     growth,
     endingBalance,
   };

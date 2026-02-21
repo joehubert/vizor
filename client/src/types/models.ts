@@ -69,6 +69,7 @@ export interface Schedule {
   endYear: number;
   increaseType: IncreaseType;
   increaseRate: number;
+  taxRate?: number;
 }
 
 export interface RetirementAccountModel extends ModelBase {
@@ -143,6 +144,7 @@ export interface AccountBalanceYear {
   startingBalance: number;
   contributions: number;
   distributions: number;
+  distributionIncome: number;
   growth: number;
   endingBalance: number;
 }

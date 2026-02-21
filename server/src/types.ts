@@ -71,6 +71,7 @@ export interface Schedule {
   endYear: number;
   increaseType: IncreaseType;
   increaseRate: number;
+  taxRate?: number;
 }
 
 export interface RetirementAccountModel extends ModelBase {

@@ -163,6 +163,7 @@ interface Schedule {
   endYear: number;
   increaseType: IncreaseType;      // Default: 'percent'
   increaseRate: number;            // Default: 0 for contributions, CPI for distributions
+  taxRate?: number;                // Optional tax rate as percent (0–100). Applied to distributions to compute after-tax income. Does not affect balance depletion.
 }
 ```
 
@@ -240,6 +241,7 @@ interface AccountBalanceYear {
   startingBalance: number;
   contributions: number;
   distributions: number;
+  distributionIncome: number;      // After-tax distribution amount credited to cash flow income
   growth: number;
   endingBalance: number;
 }

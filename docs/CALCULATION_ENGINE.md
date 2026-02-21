@@ -168,11 +168,15 @@ BALANCE TRACKING (per year, sequentially — order matters):
     endingBalance = balanceAfterFlows + growth
 
 CASH FLOW OUTPUT:
-    - If contributionAmount > 0: LineItem as expense (money leaving cash flow)
-    - If distributionAmount > 0: LineItem as income (money entering cash flow)
+    - If contributionAmount > 0: LineItem as expense (money leaving cash flow into the account)
+    - If distributionAmount > 0:
+        taxRate = distributions.taxRate ?? 0
+        distributionIncome = distributionAmount * (1 - taxRate / 100)
+        LineItem as income with amount = distributionIncome
 
 BALANCE OUTPUT:
-    - AccountBalanceYear record with all balance details
+    - AccountBalanceYear record with startingBalance, contributions, distributions (gross),
+      distributionIncome (after-tax), growth, endingBalance
 ```
 
 **Important edge cases:**
