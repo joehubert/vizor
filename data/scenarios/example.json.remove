@@ -1,0 +1,294 @@
+{
+  "name": "sample",
+  "description": "Sample financial projection — the Martinez family",
+  "config": {
+    "startYear": 2025,
+    "endYear": 2055,
+    "cpiRate": 3,
+    "startingCashBalance": 45000
+  },
+  "basedOn": null,
+  "models": [
+    {
+      "id": "salary-1",
+      "type": "salary",
+      "enabled": true,
+      "description": "Carlos Salary",
+      "amount": 88000,
+      "startYear": 2026,
+      "endYear": 2040,
+      "increaseType": "percent",
+      "increaseRate": 3
+    },
+    {
+      "id": "salary-2",
+      "type": "salary",
+      "enabled": true,
+      "description": "Sofia Salary",
+      "amount": 62000,
+      "startYear": 2026,
+      "endYear": 2038,
+      "increaseType": "percent",
+      "increaseRate": 3
+    },
+    {
+      "id": "expense-1",
+      "type": "recurring_expense",
+      "enabled": true,
+      "description": "Property Tax",
+      "amount": 8500,
+      "startYear": 2026,
+      "endYear": 2055,
+      "increaseType": "percent",
+      "increaseRate": 3
+    },
+    {
+      "id": "expense-2",
+      "type": "recurring_expense",
+      "enabled": true,
+      "description": "Mortgage",
+      "amount": 24000,
+      "startYear": 2026,
+      "endYear": 2051,
+      "increaseType": "flat",
+      "increaseRate": 0
+    },
+    {
+      "id": "expense-3",
+      "type": "recurring_expense",
+      "enabled": true,
+      "description": "Utilities and Services",
+      "amount": 7200,
+      "startYear": 2026,
+      "endYear": 2055,
+      "increaseType": "percent",
+      "increaseRate": 3
+    },
+    {
+      "id": "expense-4",
+      "type": "recurring_expense",
+      "enabled": true,
+      "description": "Household Expenses",
+      "amount": 18000,
+      "startYear": 2026,
+      "endYear": 2055,
+      "increaseType": "percent",
+      "increaseRate": 3
+    },
+    {
+      "id": "expense-5",
+      "type": "recurring_expense",
+      "enabled": true,
+      "description": "Childcare",
+      "amount": 22000,
+      "startYear": 2026,
+      "endYear": 2032,
+      "increaseType": "percent",
+      "increaseRate": 3
+    },
+    {
+      "id": "expense-6",
+      "type": "recurring_expense",
+      "enabled": true,
+      "description": "Yearly Misc. Expenses",
+      "amount": 10000,
+      "startYear": 2026,
+      "endYear": 2055,
+      "increaseType": "percent",
+      "increaseRate": 3
+    },
+    {
+      "id": "expense-7",
+      "type": "recurring_expense",
+      "enabled": true,
+      "description": "Toyota Sienna Loan",
+      "amount": 6600,
+      "startYear": 2026,
+      "endYear": 2030,
+      "increaseType": "flat",
+      "increaseRate": 0
+    },
+    {
+      "id": "retirement-1",
+      "type": "retirement_account",
+      "enabled": true,
+      "description": "Carlos 401(k)",
+      "currentBalance": 145000,
+      "balanceAsOfYear": 2026,
+      "growthRate": 6,
+      "contributions": {
+        "amount": 12000,
+        "startYear": 2026,
+        "endYear": 2040,
+        "increaseType": "percent",
+        "increaseRate": 2
+      },
+      "distributions": {
+        "amount": 55000,
+        "startYear": 2041,
+        "endYear": 2055,
+        "increaseType": "percent",
+        "increaseRate": 3,
+        "taxRate": 22
+      }
+    },
+    {
+      "id": "retirement-2",
+      "type": "retirement_account",
+      "enabled": true,
+      "description": "Sofia Roth IRA",
+      "currentBalance": 48000,
+      "balanceAsOfYear": 2026,
+      "growthRate": 6,
+      "contributions": {
+        "amount": 6500,
+        "startYear": 2026,
+        "endYear": 2038,
+        "increaseType": "flat",
+        "increaseRate": 0
+      },
+      "distributions": {
+        "amount": 30000,
+        "startYear": 2041,
+        "endYear": 2055,
+        "increaseType": "percent",
+        "increaseRate": 3,
+        "taxRate": 0
+      }
+    },
+    {
+      "id": "retirement-3",
+      "type": "retirement_account",
+      "enabled": true,
+      "description": "Brokerage Account",
+      "currentBalance": 62000,
+      "balanceAsOfYear": 2026,
+      "growthRate": 5,
+      "contributions": {
+        "amount": 8000,
+        "startYear": 2026,
+        "endYear": 2040,
+        "increaseType": "percent",
+        "increaseRate": 2
+      },
+      "distributions": {
+        "amount": 20000,
+        "startYear": 2041,
+        "endYear": 2055,
+        "increaseType": "percent",
+        "increaseRate": 3,
+        "taxRate": 15
+      }
+    },
+    {
+      "id": "529-1",
+      "type": "retirement_account",
+      "enabled": true,
+      "description": "Lucas 529",
+      "currentBalance": 18000,
+      "balanceAsOfYear": 2026,
+      "growthRate": 5,
+      "contributions": {
+        "amount": 4000,
+        "startYear": 2026,
+        "endYear": 2035,
+        "increaseType": "flat",
+        "increaseRate": 0
+      },
+      "distributions": {
+        "amount": 35000,
+        "startYear": 2036,
+        "endYear": 2040,
+        "increaseType": "percent",
+        "increaseRate": 3
+      }
+    },
+    {
+      "id": "529-2",
+      "type": "retirement_account",
+      "enabled": true,
+      "description": "Mia 529",
+      "currentBalance": 10000,
+      "balanceAsOfYear": 2026,
+      "growthRate": 5,
+      "contributions": {
+        "amount": 4000,
+        "startYear": 2026,
+        "endYear": 2038,
+        "increaseType": "flat",
+        "increaseRate": 0
+      },
+      "distributions": {
+        "amount": 35000,
+        "startYear": 2039,
+        "endYear": 2043,
+        "increaseType": "percent",
+        "increaseRate": 3
+      }
+    },
+    {
+      "id": "college-1",
+      "type": "recurring_expense",
+      "enabled": true,
+      "description": "Lucas College",
+      "amount": 28000,
+      "startYear": 2036,
+      "endYear": 2040,
+      "increaseType": "percent",
+      "increaseRate": 3
+    },
+    {
+      "id": "college-2",
+      "type": "recurring_expense",
+      "enabled": true,
+      "description": "Mia College",
+      "amount": 28000,
+      "startYear": 2039,
+      "endYear": 2043,
+      "increaseType": "percent",
+      "increaseRate": 3
+    },
+    {
+      "id": "rental-1",
+      "type": "salary",
+      "enabled": true,
+      "description": "Rental Property Income",
+      "amount": 18000,
+      "startYear": 2026,
+      "endYear": 2055,
+      "increaseType": "percent",
+      "increaseRate": 2
+    },
+    {
+      "id": "rental-expense-1",
+      "type": "recurring_expense",
+      "enabled": true,
+      "description": "Rental Property Expenses",
+      "amount": 6000,
+      "startYear": 2026,
+      "endYear": 2055,
+      "increaseType": "percent",
+      "increaseRate": 3
+    },
+    {
+      "id": "ss-1",
+      "type": "social_security",
+      "enabled": true,
+      "description": "Carlos SS",
+      "annualBenefit": 28000,
+      "startYear": 2041,
+      "endYear": 2065,
+      "increaseRate": 2.5
+    },
+    {
+      "id": "ss-2",
+      "type": "social_security",
+      "enabled": true,
+      "description": "Sofia SS",
+      "annualBenefit": 22000,
+      "startYear": 2041,
+      "endYear": 2065,
+      "increaseRate": 2.5
+    }
+  ]
+}
