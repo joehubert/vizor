@@ -98,6 +98,18 @@ export default function SettingsModal({ defaults, onSave, onClose }: Props) {
           <p className="form-hint">Default annual cost-of-living adjustment for Social Security</p>
         </div>
 
+        <h4 className="settings-section-label">Charts</h4>
+
+        <div className="form-group">
+          <label>Negative Zone Color</label>
+          <input
+            type="color"
+            value={form.negativeZoneColor ?? '#ef4444'}
+            onChange={(e) => setForm((prev) => ({ ...prev, negativeZoneColor: e.target.value }))}
+          />
+          <p className="form-hint">Fill color for the below-$0 shaded region in charts</p>
+        </div>
+
         <h4 className="settings-section-label">Typical Annual Costs</h4>
         <p className="form-hint">Reference values shown as hints when creating expense models</p>
 

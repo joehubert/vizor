@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import {
   LineChart,
   Line,
@@ -7,6 +7,7 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
+  ReferenceArea,
   ResponsiveContainer,
 } from 'recharts';
 import type { AccountBalanceYear } from '../../types/models';
@@ -14,9 +15,10 @@ import { formatDollars, formatDollarsAxis } from '../../utils/format';
 
 interface Props {
   accountBalances: AccountBalanceYear[];
+  negativeZoneColor?: string;
 }
 
-export default function InvestmentBalanceChart({ accountBalances }: Readonly<Props>) {
+export default function InvestmentBalanceChart({ accountBalances, negativeZoneColor = '#ef4444' }: Readonly<Props>) {
   // Group account balances by modelId and create chart data
   const { accounts, chartData } = useMemo(() => {
     const accountMap = new Map<string, string>();
@@ -53,6 +55,20 @@ export default function InvestmentBalanceChart({ accountBalances }: Readonly<Pro
     setVisible((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
+  const allVisible = accounts.length > 0 && accounts.every((a) => visible[a.key] ?? true);
+  const someVisible = accounts.some((a) => visible[a.key] ?? true);
+  const allCheckRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (allCheckRef.current) {
+      allCheckRef.current.indeterminate = someVisible && !allVisible;
+    }
+  }, [allVisible, someVisible]);
+
+  const toggleAll = (checked: boolean) => {
+    setVisible(Object.fromEntries(accounts.map(({ key }) => [key, checked])));
+  };
+
   // Color palette for different accounts
   const COLORS = [
     '#3b82f6',
@@ -76,6 +92,15 @@ export default function InvestmentBalanceChart({ accountBalances }: Readonly<Pro
   return (
     <div className="chart-with-filters">
       <div className="chart-line-filters">
+        <label className="chart-filter-checkbox chart-filter-all">
+          <input
+            ref={allCheckRef}
+            type="checkbox"
+            checked={allVisible}
+            onChange={(e) => toggleAll(e.target.checked)}
+          />
+          <span>All</span>
+        </label>
         {accounts.map((account, i) => (
           <label key={account.key} className="chart-filter-checkbox">
             <input
@@ -101,6 +126,7 @@ export default function InvestmentBalanceChart({ accountBalances }: Readonly<Pro
             labelFormatter={(label) => `Year: ${label}`}
           />
           <Legend />
+          <ReferenceArea y1={Number.MIN_SAFE_INTEGER} y2={0} fill={negativeZoneColor} fillOpacity={0.06} ifOverflow="hidden" />
           {accounts.map((account, i) =>
             visible[account.key] ? (
               <Line

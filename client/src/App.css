@@ -244,6 +244,14 @@
   border-radius: 1px;
 }
 
+.chart-filter-all {
+  font-weight: 600;
+  color: #333;
+  padding-right: 0.75rem;
+  margin-right: 0.25rem;
+  border-right: 1px solid #d0d0d4;
+}
+
 /* Compare view */
 .compare-view {
   padding: 1.25rem;

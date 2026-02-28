@@ -9,6 +9,25 @@
   gap: 0.25rem;
 }
 
+.sidebar-toggle-all {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.3rem 0.5rem;
+  margin-bottom: 0.25rem;
+  border-bottom: 1px solid #e0e0e4;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #555;
+  cursor: pointer;
+  user-select: none;
+}
+
+.sidebar-toggle-all input[type="checkbox"] {
+  cursor: pointer;
+  margin: 0;
+}
+
 .model-group {
   margin-bottom: 0.5rem;
 }

@@ -153,6 +153,13 @@ function App() {
     saveScenario(updatedModels);
   }
 
+  // Toggle all models enabled/disabled
+  function handleToggleAllModels(enabled: boolean) {
+    if (!detail) return;
+    const updatedModels = detail.scenario.models.map((m) => ({ ...m, enabled }));
+    saveScenario(updatedModels);
+  }
+
   // Save edited or new model
   function handleSaveModel(model: Model) {
     if (!detail) return;
@@ -343,6 +350,7 @@ function App() {
               setNewModel(null);
             }}
             onToggleModel={handleToggleModel}
+            onToggleAllModels={handleToggleAllModels}
             onAddModel={() => setShowTemplatePicker(true)}
           />
 
@@ -383,15 +391,15 @@ function App() {
               <div className="chart-container">
                 <section className="chart-section">
                   <h2>Income, Expenses & Net</h2>
-                  <OverviewLineChart years={detail.calculated.years} />
+                  <OverviewLineChart years={detail.calculated.years} negativeZoneColor={defaults.negativeZoneColor} />
                 </section>
                 <section className="chart-section">
                   <h2>Income & Expense Breakdown</h2>
-                  <StackedBarChart years={detail.calculated.years} />
+                  <StackedBarChart years={detail.calculated.years} negativeZoneColor={defaults.negativeZoneColor} />
                 </section>
                 <section className="chart-section">
                   <h2>Investment Account Balance Projection</h2>
-                  <InvestmentBalanceChart accountBalances={detail.calculated.accountBalances} />
+                  <InvestmentBalanceChart accountBalances={detail.calculated.accountBalances} negativeZoneColor={defaults.negativeZoneColor} />
                 </section>
               </div>
             )}

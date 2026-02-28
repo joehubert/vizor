@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   LineChart,
   Line,
@@ -7,6 +7,7 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
+  ReferenceArea,
   ResponsiveContainer,
 } from 'recharts';
 import type { YearData } from '../../types/models';
@@ -22,9 +23,10 @@ const LINE_CONFIG = [
 
 interface Props {
   years: YearData[];
+  negativeZoneColor?: string;
 }
 
-export default function OverviewLineChart({ years }: Readonly<Props>) {
+export default function OverviewLineChart({ years, negativeZoneColor = '#ef4444' }: Readonly<Props>) {
   const [visible, setVisible] = useState<Record<string, boolean>>(() =>
     Object.fromEntries(LINE_CONFIG.map(({ key }) => [key, true]))
   );
@@ -33,9 +35,32 @@ export default function OverviewLineChart({ years }: Readonly<Props>) {
     setVisible((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
+  const allVisible = LINE_CONFIG.every(({ key }) => visible[key] ?? true);
+  const someVisible = LINE_CONFIG.some(({ key }) => visible[key] ?? true);
+  const allCheckRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (allCheckRef.current) {
+      allCheckRef.current.indeterminate = someVisible && !allVisible;
+    }
+  }, [allVisible, someVisible]);
+
+  const toggleAll = (checked: boolean) => {
+    setVisible(Object.fromEntries(LINE_CONFIG.map(({ key }) => [key, checked])));
+  };
+
   return (
     <div className="chart-with-filters">
       <div className="chart-line-filters">
+        <label className="chart-filter-checkbox chart-filter-all">
+          <input
+            ref={allCheckRef}
+            type="checkbox"
+            checked={allVisible}
+            onChange={(e) => toggleAll(e.target.checked)}
+          />
+          <span>All</span>
+        </label>
         {LINE_CONFIG.map(({ key, label, stroke }) => (
           <label key={key} className="chart-filter-checkbox">
             <input
@@ -58,6 +83,7 @@ export default function OverviewLineChart({ years }: Readonly<Props>) {
             labelFormatter={(label) => `Year: ${label}`}
           />
           <Legend />
+          <ReferenceArea y1={Number.MIN_SAFE_INTEGER} y2={0} fill={negativeZoneColor} fillOpacity={0.06} ifOverflow="hidden" />
           {visible.totalIncome && (
             <Line
               type="monotone"

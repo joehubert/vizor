@@ -161,6 +161,7 @@ export interface Defaults {
   };
   retirementGrowthRate: number;
   socialSecurityCOLA: number;
+  negativeZoneColor: string;
 }
 
 export interface ScenarioResponse {

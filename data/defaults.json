@@ -9,5 +9,6 @@
     "homeownersInsurance": 2000
   },
   "retirementGrowthRate": 6,
-  "socialSecurityCOLA": 2.5
+  "socialSecurityCOLA": 2.5,
+  "negativeZoneColor": "#ef4444"
 }

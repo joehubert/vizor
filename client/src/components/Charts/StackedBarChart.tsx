@@ -8,6 +8,7 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
+  ReferenceArea,
   ResponsiveContainer,
 } from 'recharts';
 import type { YearData } from '../../types/models';
@@ -15,6 +16,7 @@ import { formatDollars, formatDollarsAxis } from '../../utils/format';
 
 interface Props {
   years: YearData[];
+  negativeZoneColor?: string;
 }
 
 const INCOME_COLORS = ['#22c55e', '#16a34a', '#15803d', '#166534', '#4ade80'];
@@ -26,7 +28,7 @@ interface ModelInfo {
   category: 'income' | 'expense';
 }
 
-export default function StackedBarChart({ years }: Props) {
+export default function StackedBarChart({ years, negativeZoneColor = '#ef4444' }: Readonly<Props>) {
   // Discover all unique model IDs across all years and categorize them
   const { models, chartData } = useMemo(() => {
     const incomeModels = new Map<string, string>();
@@ -86,6 +88,7 @@ export default function StackedBarChart({ years }: Props) {
           labelFormatter={(label) => `Year: ${label}`}
         />
         <Legend />
+        <ReferenceArea y1={Number.MIN_SAFE_INTEGER} y2={0} fill={negativeZoneColor} fillOpacity={0.06} ifOverflow="hidden" />
 
         {/* Income bars (positive, stacked) */}
         {models

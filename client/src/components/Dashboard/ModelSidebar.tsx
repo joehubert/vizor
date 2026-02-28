@@ -1,3 +1,4 @@
+import { useRef, useEffect } from 'react';
 import type { Model } from '../../types/models';
 import './ModelSidebar.css';
 
@@ -6,6 +7,7 @@ interface Props {
   selectedModelId: string | null;
   onSelectModel: (id: string) => void;
   onToggleModel: (id: string, enabled: boolean) => void;
+  onToggleAllModels: (enabled: boolean) => void;
   onAddModel: () => void;
 }
 
@@ -89,12 +91,33 @@ export default function ModelSidebar({
   selectedModelId,
   onSelectModel,
   onToggleModel,
+  onToggleAllModels,
   onAddModel,
 }: Props) {
   const groups = groupModels(models);
+  const allEnabled = models.length > 0 && models.every((m) => m.enabled);
+  const someEnabled = models.some((m) => m.enabled);
+  const allCheckRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (allCheckRef.current) {
+      allCheckRef.current.indeterminate = someEnabled && !allEnabled;
+    }
+  }, [allEnabled, someEnabled]);
 
   return (
     <aside className="model-sidebar">
+      {models.length > 0 && (
+        <label className="sidebar-toggle-all">
+          <input
+            ref={allCheckRef}
+            type="checkbox"
+            checked={allEnabled}
+            onChange={(e) => onToggleAllModels(e.target.checked)}
+          />
+          All
+        </label>
+      )}
       <ModelGroup label="Income" models={groups.income} selectedModelId={selectedModelId} onSelectModel={onSelectModel} onToggleModel={onToggleModel} />
       <ModelGroup label="Expenses" models={groups.expenses} selectedModelId={selectedModelId} onSelectModel={onSelectModel} onToggleModel={onToggleModel} />
       <ModelGroup label="Accounts" models={groups.accounts} selectedModelId={selectedModelId} onSelectModel={onSelectModel} onToggleModel={onToggleModel} />
