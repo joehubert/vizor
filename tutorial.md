@@ -27,7 +27,7 @@ The repo includes a sample data file to help you get oriented. To use it:
 
 1. In the `data/scenarios/` directory, find `example.json.remove`.
 2. Rename it to `example.json` (remove the `.remove` extension).
-3. Refresh Vizor in your browser. The **"sample"** scenario (the Martinez family) will now appear in the scenario picker dropdown.
+3. Refresh Vizor in your browser. The **"example"** scenario (the Martinez family) will now appear in the scenario picker dropdown.
 
 Select it and explore. You'll see a multi-decade projection for a fictional family — two salaries, a mortgage, childcare, college costs, retirement accounts, and Social Security. This is a good reference as you build your own scenarios.
 
