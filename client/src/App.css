@@ -231,7 +231,7 @@
   user-select: none;
 }
 
-.chart-filter-checkbox input {
+.chart-filter-checkbox input[type=checkbox] {
   width: 1rem;
   height: 1rem;
   accent-color: #1a1a2e;
@@ -250,6 +250,54 @@
   padding-right: 0.75rem;
   margin-right: 0.25rem;
   border-right: 1px solid #d0d0d4;
+}
+
+/* Chart year range filter bar */
+.chart-year-range-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem 1.25rem;
+  flex-wrap: wrap;
+  padding: 0.6rem 1rem;
+  background: #f9f9fb;
+  border: 1px solid #e0e0e4;
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+}
+
+.chart-year-range-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #333;
+  padding-right: 0.75rem;
+  margin-right: 0.25rem;
+  border-right: 1px solid #d0d0d4;
+}
+
+.chart-year-input {
+  width: 80px;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+
+.chart-year-reset {
+  margin-left: auto;
+  padding: 0.25rem 0.6rem;
+  font-size: 0.8rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: white;
+  color: #555;
+  cursor: pointer;
+}
+
+.chart-year-reset:hover {
+  background: #f0f0f0;
+  color: #1a1a2e;
 }
 
 /* Compare view */

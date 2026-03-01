@@ -65,6 +65,10 @@ function App() {
   // View state
   const [activeView, setActiveView] = useState<'charts' | 'table'>('charts');
 
+  // Chart year range filter state
+  const [chartStartYear, setChartStartYear] = useState<number | null>(null);
+  const [chartEndYear, setChartEndYear] = useState<number | null>(null);
+
   // Compare state
   const [compareResults, setCompareResults] = useState<CalculationOutput[] | null>(null);
 
@@ -109,6 +113,18 @@ function App() {
     if (selected) loadScenario(selected);
     else setDetail(null);
   }, [selected, loadScenario]);
+
+  // Initialize chart year range when scenario data changes
+  useEffect(() => {
+    if (!detail?.calculated.years.length) {
+      setChartStartYear(null);
+      setChartEndYear(null);
+      return;
+    }
+    const years = detail.calculated.years;
+    setChartStartYear(years[0].year);
+    setChartEndYear(years.at(-1)!.year);
+  }, [detail]);
 
   // Save updated scenario to server and refresh
   function saveScenario(updatedModels: Model[]) {
@@ -295,6 +311,23 @@ function App() {
     ?? detail?.scenario.models.find((m) => m.id === editingModelId)
     ?? null;
 
+  // Chart year range filtering
+  const allYears = detail?.calculated.years ?? [];
+  const fullStart = allYears.at(0)?.year ?? null;
+  const fullEnd   = allYears.at(-1)?.year ?? null;
+  const effectiveStart = chartStartYear ?? fullStart;
+  const effectiveEnd   = chartEndYear   ?? fullEnd;
+
+  const filteredYears = allYears.filter((y) => {
+    const s = effectiveStart ?? -Infinity, e = effectiveEnd ?? Infinity;
+    return s <= e && y.year >= s && y.year <= e;
+  });
+
+  const filteredAccountBalances = (detail?.calculated.accountBalances ?? []).filter((ab) => {
+    const s = effectiveStart ?? -Infinity, e = effectiveEnd ?? Infinity;
+    return s <= e && ab.year >= s && ab.year <= e;
+  });
+
   return (
     <div className="app-layout">
       <header className="top-bar">
@@ -389,17 +422,52 @@ function App() {
 
             {activeView === 'charts' && (
               <div className="chart-container">
+                {effectiveStart !== null && effectiveEnd !== null && (
+                  <div className="chart-year-range-bar">
+                    <span className="chart-year-range-label">Year Range</span>
+                    <label className="chart-filter-checkbox">
+                      <span>From</span>
+                      <input
+                        type="number"
+                        className="chart-year-input"
+                        value={effectiveStart}
+                        min={fullStart ?? undefined}
+                        max={effectiveEnd}
+                        onChange={(e) => { const v = Number(e.target.value); if (!Number.isNaN(v)) setChartStartYear(v); }}
+                      />
+                    </label>
+                    <label className="chart-filter-checkbox">
+                      <span>To</span>
+                      <input
+                        type="number"
+                        className="chart-year-input"
+                        value={effectiveEnd}
+                        min={effectiveStart}
+                        max={fullEnd ?? undefined}
+                        onChange={(e) => { const v = Number(e.target.value); if (!Number.isNaN(v)) setChartEndYear(v); }}
+                      />
+                    </label>
+                    {(chartStartYear !== fullStart || chartEndYear !== fullEnd) && (
+                      <button
+                        className="chart-year-reset"
+                        onClick={() => { setChartStartYear(fullStart); setChartEndYear(fullEnd); }}
+                      >
+                        Reset
+                      </button>
+                    )}
+                  </div>
+                )}
                 <section className="chart-section">
                   <h2>Income, Expenses & Net</h2>
-                  <OverviewLineChart years={detail.calculated.years} negativeZoneColor={defaults.negativeZoneColor} />
+                  <OverviewLineChart years={filteredYears} negativeZoneColor={defaults.negativeZoneColor} />
                 </section>
                 <section className="chart-section">
                   <h2>Income & Expense Breakdown</h2>
-                  <StackedBarChart years={detail.calculated.years} negativeZoneColor={defaults.negativeZoneColor} />
+                  <StackedBarChart years={filteredYears} negativeZoneColor={defaults.negativeZoneColor} />
                 </section>
                 <section className="chart-section">
                   <h2>Investment Account Balance Projection</h2>
-                  <InvestmentBalanceChart accountBalances={detail.calculated.accountBalances} negativeZoneColor={defaults.negativeZoneColor} />
+                  <InvestmentBalanceChart accountBalances={filteredAccountBalances} negativeZoneColor={defaults.negativeZoneColor} />
                 </section>
               </div>
             )}
