@@ -8,6 +8,7 @@ import {
   Tooltip,
   Legend,
   ReferenceArea,
+  ReferenceLine,
   ResponsiveContainer,
 } from 'recharts';
 import type { AccountBalanceYear } from '../../types/models';
@@ -47,9 +48,41 @@ export default function InvestmentBalanceChart({ accountBalances, negativeZoneCo
     return { accounts, chartData };
   }, [accountBalances]);
 
-  const [visible, setVisible] = useState<Record<string, boolean>>(() =>
-    Object.fromEntries(accounts.map(({ key }) => [key, true]))
-  );
+  // Find depletion year per account: first year endingBalance hits 0 after being > 0
+  const depletionYears = useMemo(() => {
+    const result: { accountKey: string; description: string; year: number }[] = [];
+    for (const account of accounts) {
+      let wentPositive = false;
+      for (const row of chartData) {
+        const balance = row[account.key] as number | undefined;
+        if (balance === undefined) continue;
+        if (balance > 0) { wentPositive = true; continue; }
+        if (wentPositive && balance <= 0) {
+          result.push({ accountKey: account.key, description: account.description, year: row.year });
+          break; // only first depletion
+        }
+      }
+    }
+    return result;
+  }, [accounts, chartData]);
+
+  const [visible, setVisible] = useState<Record<string, boolean>>({});
+
+  // Sync: when accounts list changes, add any NEW accounts as visible=true
+  // but do NOT reset accounts the user has already toggled
+  useEffect(() => {
+    setVisible((prev) => {
+      const updated = { ...prev };
+      let changed = false;
+      for (const { key } of accounts) {
+        if (!(key in updated)) {
+          updated[key] = true;
+          changed = true;
+        }
+      }
+      return changed ? updated : prev;
+    });
+  }, [accounts]);
 
   const toggle = (key: string) => {
     setVisible((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -137,6 +170,22 @@ export default function InvestmentBalanceChart({ accountBalances, negativeZoneCo
                 stroke={COLORS[i % COLORS.length]}
                 strokeWidth={2}
                 dot={false}
+              />
+            ) : null
+          )}
+          {depletionYears.map(({ accountKey, description, year }) =>
+            (visible[accountKey] ?? true) ? (
+              <ReferenceLine
+                key={`depletion-${accountKey}`}
+                x={year}
+                stroke="#ef4444"
+                strokeDasharray="4 2"
+                label={{
+                  value: `${description} depleted`,
+                  position: 'insideTopRight',
+                  fontSize: 11,
+                  fill: '#ef4444',
+                }}
               />
             ) : null
           )}

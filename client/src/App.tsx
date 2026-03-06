@@ -476,6 +476,7 @@ function App() {
               <DataTable
                 years={detail.calculated.years}
                 scenarioName={detail.scenario.name}
+                accountBalances={detail.calculated.accountBalances}
               />
             )}
           </div>

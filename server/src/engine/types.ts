@@ -15,6 +15,7 @@ export interface YearData {
   yearlyNet: number;
   cumulativeNet: number;
   cashOnHand: number;
+  totalInvestmentBalance: number;
 }
 
 export interface LineItem {

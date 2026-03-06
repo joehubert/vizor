@@ -1,11 +1,12 @@
 import { useMemo } from 'react';
-import type { YearData } from '../../types/models';
+import type { YearData, AccountBalanceYear } from '../../types/models';
 import { formatDollars } from '../../utils/format';
 import './DataTable.css';
 
 interface Props {
   years: YearData[];
   scenarioName: string;
+  accountBalances: AccountBalanceYear[];
 }
 
 interface RowData {
@@ -120,9 +121,40 @@ function downloadCSV(csv: string, filename: string) {
   URL.revokeObjectURL(url);
 }
 
-export default function DataTable({ years, scenarioName }: Props) {
+export default function DataTable({ years, scenarioName, accountBalances }: Props) {
   const rows = useMemo(() => buildRows(years), [years]);
   const yearNums = years.map((y) => y.year);
+
+  // Derive unique investment accounts and their ending balances per year
+  const investmentAccounts = useMemo(() => {
+    const accountMap = new Map<string, string>(); // modelId -> description
+    for (const ab of accountBalances) {
+      if (!accountMap.has(ab.modelId)) {
+        accountMap.set(ab.modelId, ab.description);
+      }
+    }
+    return Array.from(accountMap.entries()).map(([modelId, description]) => {
+      const balanceByYear = new Map<number, number>();
+      for (const ab of accountBalances) {
+        if (ab.modelId === modelId) {
+          balanceByYear.set(ab.year, ab.endingBalance);
+        }
+      }
+      // Detect depletion: first year balance hits 0 after being positive
+      let wentPositive = false;
+      const depletedYear = new Set<number>();
+      for (const yr of yearNums) {
+        const bal = balanceByYear.get(yr);
+        if (bal === undefined) continue;
+        if (bal > 0) { wentPositive = true; continue; }
+        if (wentPositive && bal <= 0) {
+          depletedYear.add(yr);
+          break;
+        }
+      }
+      return { modelId, description, balanceByYear, depletedYear };
+    });
+  }, [accountBalances, yearNums]);
 
   function handleExport() {
     const csv = buildCSV(years, rows);
@@ -198,6 +230,32 @@ export default function DataTable({ years, scenarioName }: Props) {
 
               return elements;
             })}
+            {investmentAccounts.length > 0 && (
+              <>
+                <tr className="category-row">
+                  <td className="sticky-col" colSpan={yearNums.length + 1}>
+                    Investment Account Balances
+                  </td>
+                </tr>
+                {investmentAccounts.map((account) => (
+                  <tr key={account.modelId}>
+                    <td className="sticky-col model-label">{account.description || '(untitled)'}</td>
+                    {yearNums.map((yr) => {
+                      const val = account.balanceByYear.get(yr);
+                      if (val === undefined) {
+                        return <td key={yr} className="cell-empty">&mdash;</td>;
+                      }
+                      const isDepletedYear = account.depletedYear.has(yr);
+                      return (
+                        <td key={yr} className={isDepletedYear ? 'negative' : ''}>
+                          {formatDollars(val)}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </>
+            )}
           </tbody>
         </table>
       </div>

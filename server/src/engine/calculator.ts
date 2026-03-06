@@ -97,6 +97,11 @@ export function calculate(scenario: Scenario): CalculationOutput {
     const yearlyNet = totalIncome - totalExpenses;
     cumulativeNet += yearlyNet;
 
+    // Compute total investment balance for this year
+    const totalInvestmentBalance = allAccountBalances
+      .filter((ab) => ab.year === year)
+      .reduce((sum, ab) => sum + ab.endingBalance, 0);
+
     years.push({
       year,
       incomes,
@@ -106,6 +111,7 @@ export function calculate(scenario: Scenario): CalculationOutput {
       yearlyNet,
       cumulativeNet,
       cashOnHand: startingCashBalance + cumulativeNet,
+      totalInvestmentBalance,
     });
   }
 

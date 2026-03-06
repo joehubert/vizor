@@ -1,0 +1,359 @@
+# Vizor — Investment Balance Improvements: Claude Code Instructions
+
+These instructions describe 5 focused changes to the Vizor codebase. Implement them in order, as some later steps depend on earlier ones. Do not refactor unrelated code.
+
+---
+
+## Change 1: Add `totalInvestmentBalance` to `YearData` in the calculation engine
+
+**Goal:** Compute the sum of all investment account ending balances per year and include it in the yearly output, so it can be charted alongside cash flow metrics.
+
+### Step 1a — Update the server-side type
+
+**File:** `server/src/engine/types.ts`
+
+Add `totalInvestmentBalance: number` to the `YearData` interface:
+
+```typescript
+export interface YearData {
+  year: number;
+  incomes: LineItem[];
+  expenses: LineItem[];
+  totalIncome: number;
+  totalExpenses: number;
+  yearlyNet: number;
+  cumulativeNet: number;
+  cashOnHand: number;
+  totalInvestmentBalance: number; // <-- ADD THIS
+}
+```
+
+### Step 1b — Update the client-side type mirror
+
+**File:** `client/src/types/models.ts`
+
+The `YearData` interface is also defined here. Add the same field:
+
+```typescript
+export interface YearData {
+  year: number;
+  incomes: LineItem[];
+  expenses: LineItem[];
+  totalIncome: number;
+  totalExpenses: number;
+  yearlyNet: number;
+  cumulativeNet: number;
+  cashOnHand: number;
+  totalInvestmentBalance: number; // <-- ADD THIS
+}
+```
+
+### Step 1c — Compute the value in the calculator
+
+**File:** `server/src/engine/calculator.ts`
+
+In the main year loop, after `allAccountBalances` is populated for the current year, compute the sum of all ending balances for that year and assign it to `totalInvestmentBalance` in the `YearData` push.
+
+Find the section that builds `years.push(...)` and update it as follows:
+
+```typescript
+// Compute total investment balance for this year
+const totalInvestmentBalance = allAccountBalances
+  .filter((ab) => ab.year === year)
+  .reduce((sum, ab) => sum + ab.endingBalance, 0);
+
+years.push({
+  year,
+  incomes,
+  expenses,
+  totalIncome,
+  totalExpenses,
+  yearlyNet,
+  cumulativeNet,
+  cashOnHand: startingCashBalance + cumulativeNet,
+  totalInvestmentBalance, // <-- ADD THIS
+});
+```
+
+> **Note:** The `allAccountBalances` array is appended to inside the retirement account loop just before this push. At the point of the push, all balances for the current year have already been added, so filtering by `ab.year === year` is correct.
+
+---
+
+## Change 2: Add `totalInvestmentBalance` and `totalAssets` lines to `OverviewLineChart`
+
+**Goal:** Add two new optional, toggleable lines to the Overview line chart:
+- **Total Investment Balance** — sum of all investment account ending balances (violet, dashed, off by default)
+- **Total Assets** — `cashOnHand + totalInvestmentBalance` (teal, dashed, off by default)
+
+**File:** `client/src/components/Charts/OverviewLineChart.tsx`
+
+### Step 2a — Update `LINE_CONFIG`
+
+Replace the existing `LINE_CONFIG` array with this updated version that adds the two new lines. The new entries have `defaultVisible: false` to start toggled off; add a `defaultVisible` property to all entries for clarity:
+
+```typescript
+const LINE_CONFIG = [
+  { key: 'cashOnHand',               label: 'Cash on Hand',               stroke: '#d97706', strokeWidth: 3, dash: '8 4',  defaultVisible: true  },
+  { key: 'cumulativeNet',            label: 'Cumulative Net',              stroke: '#1e3a5f', strokeWidth: 3, dash: '6 3',  defaultVisible: true  },
+  { key: 'totalExpenses',            label: 'Total Expenses',              stroke: '#ef4444', strokeWidth: 2, dash: undefined, defaultVisible: true },
+  { key: 'totalIncome',              label: 'Total Income',                stroke: '#22c55e', strokeWidth: 2, dash: undefined, defaultVisible: true },
+  { key: 'yearlyNet',                label: 'Yearly Net',                  stroke: '#3b82f6', strokeWidth: 2, dash: undefined, defaultVisible: true },
+  { key: 'totalInvestmentBalance',   label: 'Total Investment Balance',    stroke: '#8b5cf6', strokeWidth: 2, dash: '5 3',  defaultVisible: false },
+  { key: 'totalAssets',              label: 'Total Assets',                stroke: '#0d9488', strokeWidth: 2, dash: '5 3',  defaultVisible: false },
+] as const;
+```
+
+### Step 2b — Update the `visible` initial state
+
+Change the `useState` initializer to use `defaultVisible` from `LINE_CONFIG`:
+
+```typescript
+const [visible, setVisible] = useState<Record<string, boolean>>(() =>
+  Object.fromEntries(LINE_CONFIG.map(({ key, defaultVisible }) => [key, defaultVisible]))
+);
+```
+
+### Step 2c — Compute `totalAssets` in the chart data
+
+The chart receives `years: YearData[]` which now contains `totalInvestmentBalance`. We need to add `totalAssets` as a computed field before passing to the chart. Do this with a `useMemo` that maps the years array:
+
+Add this import at the top if not already present:
+```typescript
+import { useMemo } from 'react';
+```
+
+Then inside the component, before the `return`, add:
+
+```typescript
+const chartData = useMemo(() =>
+  years.map((y) => ({
+    ...y,
+    totalAssets: y.cashOnHand + y.totalInvestmentBalance,
+  })),
+  [years]
+);
+```
+
+### Step 2d — Update the chart to use `chartData` instead of `years`
+
+In the `<LineChart data={...}>` prop, change `years` to `chartData`:
+
+```tsx
+<LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+```
+
+### Step 2e — Replace the hardcoded `<Line>` elements with a dynamic render
+
+Replace the five individual `{visible.X && <Line ... />}` blocks with a single dynamic render driven by `LINE_CONFIG`:
+
+```tsx
+{LINE_CONFIG.map(({ key, label, stroke, strokeWidth, dash }) =>
+  visible[key] ? (
+    <Line
+      key={key}
+      type="monotone"
+      dataKey={key}
+      name={label}
+      stroke={stroke}
+      strokeWidth={strokeWidth}
+      dot={false}
+      strokeDasharray={dash}
+    />
+  ) : null
+)}
+```
+
+> This replaces the five separate conditional `<Line>` blocks. The `strokeDasharray` prop accepts `undefined` cleanly (Recharts ignores it when undefined).
+
+---
+
+## Change 3: Add depletion markers to `InvestmentBalanceChart`
+
+**Goal:** When an account's balance reaches zero before the scenario end year, mark the year of depletion with a vertical `ReferenceLine` on the chart, labeled with the account name and "Depleted".
+
+**File:** `client/src/components/Charts/InvestmentBalanceChart.tsx`
+
+### Step 3a — Add `ReferenceLine` to imports
+
+```typescript
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ReferenceArea,
+  ReferenceLine,   // <-- ADD THIS
+  ResponsiveContainer,
+} from 'recharts';
+```
+
+### Step 3b — Compute depletion years in the `useMemo`
+
+In the existing `useMemo` that builds `accounts` and `chartData`, add depletion detection. After building `chartData`, detect the first year where each account's `endingBalance` is 0 (or less) and it was positive in a prior year:
+
+Replace the end of the `useMemo` to also return `depletionYears`:
+
+```typescript
+  }, [accountBalances]);
+
+  // Find depletion year per account: first year endingBalance hits 0 after being > 0
+  const depletionYears = useMemo(() => {
+    const result: { accountKey: string; description: string; year: number }[] = [];
+    for (const account of accounts) {
+      let wentPositive = false;
+      for (const row of chartData) {
+        const balance = row[account.key] as number | undefined;
+        if (balance === undefined) continue;
+        if (balance > 0) { wentPositive = true; continue; }
+        if (wentPositive && balance <= 0) {
+          result.push({ accountKey: account.key, description: account.description, year: row.year });
+          break; // only first depletion
+        }
+      }
+    }
+    return result;
+  }, [accounts, chartData]);
+```
+
+> **Note:** The outer `useMemo` already returns `{ accounts, chartData }`. Keep that structure; add the new `depletionYears` as a second `useMemo` using the same dependencies.
+
+### Step 3c — Render `ReferenceLine` elements for depleted accounts
+
+Inside the `<LineChart>`, after the existing account `<Line>` elements, add:
+
+```tsx
+{depletionYears.map(({ accountKey, description, year }) =>
+  (visible[accountKey] ?? true) ? (
+    <ReferenceLine
+      key={`depletion-${accountKey}`}
+      x={year}
+      stroke="#ef4444"
+      strokeDasharray="4 2"
+      label={{
+        value: `${description} depleted`,
+        position: 'insideTopRight',
+        fontSize: 11,
+        fill: '#ef4444',
+      }}
+    />
+  ) : null
+)}
+```
+
+> Depletion markers are only shown when the corresponding account line is visible, keeping the chart clean.
+
+---
+
+## Change 4: Fix account toggle persistence bug in `InvestmentBalanceChart`
+
+**Goal:** When `accountBalances` prop changes (e.g. year filter changes), the `visible` state resets because it is initialized from `accounts` which is derived from `accountBalances`. This causes user toggle preferences to be lost on every year-range adjustment. Fix this so toggles persist across re-renders as long as the account (by key) still exists.
+
+**File:** `client/src/components/Charts/InvestmentBalanceChart.tsx`
+
+### Step 4a — Replace the `visible` state initialization and add a sync effect
+
+Replace the current `useState` initializer:
+
+```typescript
+// REMOVE THIS:
+const [visible, setVisible] = useState<Record<string, boolean>>(() =>
+  Object.fromEntries(accounts.map(({ key }) => [key, true]))
+);
+```
+
+With a ref-backed approach that preserves existing selections and only adds defaults for new accounts:
+
+```typescript
+const [visible, setVisible] = useState<Record<string, boolean>>({});
+
+// Sync: when accounts list changes, add any NEW accounts as visible=true
+// but do NOT reset accounts the user has already toggled
+useEffect(() => {
+  setVisible((prev) => {
+    const updated = { ...prev };
+    let changed = false;
+    for (const { key } of accounts) {
+      if (!(key in updated)) {
+        updated[key] = true;
+        changed = true;
+      }
+    }
+    return changed ? updated : prev;
+  });
+}, [accounts]);
+```
+
+> This means: when a new account appears (new model added), it defaults to visible. When the year filter changes but accounts remain the same, user toggles are preserved.
+
+---
+
+## Change 5: Add investment balance rows to the Data Table
+
+**Goal:** Add a section at the bottom of the data table that shows ending balance per investment account per year, clearly separated from the cash flow rows.
+
+**File:** `client/src/components/DataTable/DataTable.tsx` (locate this file — it may be in a subdirectory under `components/DataTable/`)
+
+> First read the existing DataTable component fully to understand how rows are currently structured before making changes. The pattern below assumes a row-based structure; adapt as needed.
+
+### Step 5a — Update DataTable props
+
+The DataTable currently receives `years: YearData[]` and `scenarioName: string`. It needs account balances too. Update the props interface:
+
+```typescript
+import type { YearData, AccountBalanceYear } from '../../types/models';
+
+interface Props {
+  years: YearData[];
+  scenarioName: string;
+  accountBalances: AccountBalanceYear[]; // <-- ADD THIS
+}
+```
+
+### Step 5b — Pass `accountBalances` from App.tsx
+
+**File:** `client/src/App.tsx`
+
+Find the `<DataTable>` usage (inside the `activeView === 'table'` block) and add the prop:
+
+```tsx
+<DataTable
+  years={detail.calculated.years}
+  scenarioName={detail.scenario.name}
+  accountBalances={detail.calculated.accountBalances}  // <-- ADD THIS
+/>
+```
+
+### Step 5c — Render account balance rows in the table
+
+Inside the DataTable component, after the existing summary rows (Total Income, Total Expenses, Yearly Net, Cumulative Net), add an "Investment Accounts" section. The exact implementation will depend on the existing row rendering pattern. The logic should:
+
+1. Derive unique accounts from `accountBalances`: `const accounts = [...new Map(accountBalances.map(ab => [ab.modelId, ab.description])).entries()]`
+2. For each account, render a row where each year cell shows the `endingBalance` for that account in that year (or `—` if no record exists for that year).
+3. Add a separator row or section header labeled **"Investment Account Balances"** above these rows.
+4. Format values the same way as other dollar cells in the table (use the existing `formatDollars` utility).
+5. Balance values should **not** be colored red when positive — they are assets, not deficits. Only color red if an ending balance is 0 and the account previously had a positive balance (depletion indicator).
+
+---
+
+## Summary of files touched
+
+| File | Change |
+|------|--------|
+| `server/src/engine/types.ts` | Add `totalInvestmentBalance` to `YearData` |
+| `client/src/types/models.ts` | Add `totalInvestmentBalance` to `YearData` |
+| `server/src/engine/calculator.ts` | Compute and populate `totalInvestmentBalance` |
+| `client/src/components/Charts/OverviewLineChart.tsx` | Add Total Investment Balance + Total Assets lines |
+| `client/src/components/Charts/InvestmentBalanceChart.tsx` | Add depletion markers + fix toggle persistence bug |
+| `client/src/components/DataTable/DataTable.tsx` | Add investment balance rows section |
+| `client/src/App.tsx` | Pass `accountBalances` to DataTable |
+
+## Testing notes
+
+After implementing, verify with the sample `example.json` scenario (Martinez family):
+- OverviewLineChart: toggle on "Total Investment Balance" and "Total Assets" — both should show smooth curves tracking the 401k + Roth IRA balances
+- InvestmentBalanceChart: confirm no depletion markers appear (the Martinez accounts don't fully deplete in the sample). To test depletion markers, temporarily lower a distribution amount to force the balance to zero mid-scenario.
+- DataTable: scroll to the bottom — should see an "Investment Account Balances" section with Carlos 401k and Sofia Roth IRA rows.
+- Toggle an account off in InvestmentBalanceChart, then adjust the year range filter — the toggle should remain in its off state after the filter change.

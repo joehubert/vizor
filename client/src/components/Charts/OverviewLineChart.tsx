@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import {
   LineChart,
   Line,
@@ -14,11 +14,13 @@ import type { YearData } from '../../types/models';
 import { formatDollars, formatDollarsAxis } from '../../utils/format';
 
 const LINE_CONFIG = [
-  { key: 'cashOnHand', label: 'Cash on Hand', stroke: '#d97706' },
-  { key: 'cumulativeNet', label: 'Cumulative Net', stroke: '#1e3a5f' },
-  { key: 'totalExpenses', label: 'Total Expenses', stroke: '#ef4444' },
-  { key: 'totalIncome', label: 'Total Income', stroke: '#22c55e' },
-  { key: 'yearlyNet', label: 'Yearly Net', stroke: '#3b82f6' },
+  { key: 'cashOnHand',             label: 'Cash on Hand',             stroke: '#d97706', strokeWidth: 3, dash: '8 4',   defaultVisible: true  },
+  { key: 'cumulativeNet',          label: 'Cumulative Net',            stroke: '#1e3a5f', strokeWidth: 3, dash: '6 3',   defaultVisible: true  },
+  { key: 'totalExpenses',          label: 'Total Expenses',            stroke: '#ef4444', strokeWidth: 2, dash: undefined, defaultVisible: true  },
+  { key: 'totalIncome',            label: 'Total Income',              stroke: '#22c55e', strokeWidth: 2, dash: undefined, defaultVisible: true  },
+  { key: 'yearlyNet',              label: 'Yearly Net',                stroke: '#3b82f6', strokeWidth: 2, dash: undefined, defaultVisible: true  },
+  { key: 'totalInvestmentBalance', label: 'Total Investment Balance',  stroke: '#8b5cf6', strokeWidth: 2, dash: '5 3',   defaultVisible: false },
+  { key: 'totalAssets',            label: 'Total Assets',              stroke: '#0d9488', strokeWidth: 2, dash: '5 3',   defaultVisible: false },
 ] as const;
 
 interface Props {
@@ -28,7 +30,7 @@ interface Props {
 
 export default function OverviewLineChart({ years, negativeZoneColor = '#ef4444' }: Readonly<Props>) {
   const [visible, setVisible] = useState<Record<string, boolean>>(() =>
-    Object.fromEntries(LINE_CONFIG.map(({ key }) => [key, true]))
+    Object.fromEntries(LINE_CONFIG.map(({ key, defaultVisible }) => [key, defaultVisible]))
   );
 
   const toggle = (key: string) => {
@@ -48,6 +50,14 @@ export default function OverviewLineChart({ years, negativeZoneColor = '#ef4444'
   const toggleAll = (checked: boolean) => {
     setVisible(Object.fromEntries(LINE_CONFIG.map(({ key }) => [key, checked])));
   };
+
+  const chartData = useMemo(() =>
+    years.map((y) => ({
+      ...y,
+      totalAssets: y.cashOnHand + y.totalInvestmentBalance,
+    })),
+    [years]
+  );
 
   return (
     <div className="chart-with-filters">
@@ -74,7 +84,7 @@ export default function OverviewLineChart({ years, negativeZoneColor = '#ef4444'
         ))}
       </div>
       <ResponsiveContainer width="100%" height={400}>
-        <LineChart data={years} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+        <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
           <XAxis dataKey="year" tickLine={false} />
           <YAxis tickFormatter={formatDollarsAxis} width={80} />
@@ -84,56 +94,19 @@ export default function OverviewLineChart({ years, negativeZoneColor = '#ef4444'
           />
           <Legend />
           <ReferenceArea y1={Number.MIN_SAFE_INTEGER} y2={0} fill={negativeZoneColor} fillOpacity={0.06} ifOverflow="hidden" />
-          {visible.totalIncome && (
-            <Line
-              type="monotone"
-              dataKey="totalIncome"
-              name="Total Income"
-              stroke="#22c55e"
-              strokeWidth={2}
-              dot={false}
-            />
-          )}
-          {visible.totalExpenses && (
-            <Line
-              type="monotone"
-              dataKey="totalExpenses"
-              name="Total Expenses"
-              stroke="#ef4444"
-              strokeWidth={2}
-              dot={false}
-            />
-          )}
-          {visible.yearlyNet && (
-            <Line
-              type="monotone"
-              dataKey="yearlyNet"
-              name="Yearly Net"
-              stroke="#3b82f6"
-              strokeWidth={2}
-              dot={false}
-            />
-          )}
-          {visible.cumulativeNet && (
-            <Line
-              type="monotone"
-              dataKey="cumulativeNet"
-              name="Cumulative Net"
-              stroke="#1e3a5f"
-              strokeWidth={3}
-              dot={false}
-            />
-          )}
-          {visible.cashOnHand && (
-            <Line
-              type="monotone"
-              dataKey="cashOnHand"
-              name="Cash on Hand"
-              stroke="#d97706"
-              strokeWidth={3}
-              dot={false}
-              strokeDasharray="8 4"
-            />
+          {LINE_CONFIG.map(({ key, label, stroke, strokeWidth, dash }) =>
+            visible[key] ? (
+              <Line
+                key={key}
+                type="monotone"
+                dataKey={key}
+                name={label}
+                stroke={stroke}
+                strokeWidth={strokeWidth}
+                dot={false}
+                strokeDasharray={dash}
+              />
+            ) : null
           )}
         </LineChart>
       </ResponsiveContainer>
