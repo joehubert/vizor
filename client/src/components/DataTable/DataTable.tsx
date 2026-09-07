@@ -62,7 +62,6 @@ function buildRows(years: YearData[]): RowData[] {
     { label: 'Total Expenses', key: 'totalExpenses' },
     { label: 'Yearly Net', key: 'yearlyNet' },
     { label: 'Cumulative Net', key: 'cumulativeNet' },
-    { label: 'Total Wealth', key: 'totalWealth' },
   ];
 
   for (const { label, key } of summaryKeys) {
@@ -72,6 +71,12 @@ function buildRows(years: YearData[]): RowData[] {
     }
     rows.push({ label, modelId: null, category: 'summary', values });
   }
+
+  const totalWealthValues = new Map<number, number>();
+  for (const yd of years) {
+    totalWealthValues.set(yd.year, yd.cashOnHand + yd.totalInvestmentBalance);
+  }
+  rows.push({ label: 'Total Wealth', modelId: null, category: 'summary', values: totalWealthValues });
 
   return rows;
 }
@@ -181,7 +186,7 @@ export default function DataTable({ years, scenarioName, accountBalances }: Prop
             </tr>
           </thead>
           <tbody>
-            {rows.map((row, idx) => {
+            {rows.map((row) => {
               const elements: React.ReactNode[] = [];
 
               // Insert category header row
